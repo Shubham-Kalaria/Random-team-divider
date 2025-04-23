@@ -27,7 +27,7 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         <meta name="theme-color" content="#ffffff" />
         <meta name="description" content="Random Team Generator" />
-        <meta name="keywords" content="team generator, random team, team division" />
+        <meta name="keywords" content="team generator, random team, team division, random team divider, random team generator, random team division, team, random, generator, divider, division, team generator" />
         <meta name="author" content="Shubham Kalaria" />
         <meta property="og:title" content="Team Generator" />
         <meta property="og:description" content="Random Team Generator" />
