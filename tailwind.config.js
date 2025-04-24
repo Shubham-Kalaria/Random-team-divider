@@ -1,10 +1,11 @@
-import type { Config } from "tailwindcss"
-const config: Config = {
+/** @type {import('tailwindcss').Config} */
+const config = {
   darkMode: ["class"],
   content: [
-    "./pages/**/*.{js,ts,jsx,tsx,mdx}",
-    "./components/**/*.{js,ts,jsx,tsx,mdx}",
-    "./app/**/*.{js,ts,jsx,tsx,mdx}",
+    "./pages/**/*.{js,jsx,mdx}",
+    "./components/**/*.{js,jsx,mdx}",
+    "./app/**/*.{js,jsx,mdx}",
+    "*.{js,jsx,mdx}",
     "*.{js,ts,jsx,tsx,mdx}",
   ],
   theme: {
@@ -67,6 +68,18 @@ const config: Config = {
           800: "#1e40af",
           900: "#1e3a8a",
         },
+        green: {
+          50: "#f0fdf4",
+          100: "#dcfce7",
+          200: "#bbf7d0",
+          300: "#86efac",
+          400: "#4ade80",
+          500: "#22c55e",
+          600: "#16a34a",
+          700: "#15803d",
+          800: "#166534",
+          900: "#14532d",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -78,4 +91,4 @@ const config: Config = {
   plugins: [require("tailwindcss-animate")],
 }
 
-export default config
+module.exports = config

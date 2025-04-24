@@ -1,4 +1,4 @@
-import TeamDivider from "@/components/team-divider"
+import TeamDivider from "@/components/team-divider";
 
 export default function Home() {
   return (
@@ -23,5 +23,5 @@ export default function Home() {
         </p>
       </footer>
     </main>
-  )
+  );
 }
