@@ -21,6 +21,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "1.0.4",
+    "env-cmd": "^10.1.0",
     "framer-motion": "latest",
     "html2canvas": "latest",
     "lucide-react": "^0.454.0",
