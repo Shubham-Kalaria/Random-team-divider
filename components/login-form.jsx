@@ -4,11 +4,10 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Lock, User } from "lucide-react";
+import { User } from "lucide-react";
 
 export default function LoginForm({ onLogin }) {
   const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
   const handleSubmit = (e) => {
@@ -19,18 +18,12 @@ export default function LoginForm({ onLogin }) {
       return;
     }
 
-    if (!password.trim()) {
-      setError("Password is required");
-      return;
-    }
-
-    // For demo purposes, accept any non-empty username/password
     // In a real app, you would validate against a backend
     onLogin(username);
   };
 
   return (
-    <div className="p-4">
+    <div className="p-4 pt-0 md:pt-4">
       {error && (
         <div className="bg-red-50 text-red-600 p-3 rounded-md text-sm mb-4">
           {error}
@@ -52,21 +45,6 @@ export default function LoginForm({ onLogin }) {
           </div>
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="password">Password</Label>
-          <div className="relative">
-            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
-            <Input
-              id="password"
-              type="password"
-              placeholder="Enter your password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-        </div>
-
         <Button
           type="submit"
           className="w-full bg-purple-600 hover:bg-purple-700"
@@ -74,10 +52,6 @@ export default function LoginForm({ onLogin }) {
           Login
         </Button>
       </form>
-
-      <p className="text-center text-sm text-gray-500 mt-4">
-        Note: Any username and password will work.
-      </p>
     </div>
   );
 }

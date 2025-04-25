@@ -13,7 +13,16 @@ import {
   LogOut,
   Download,
   LogIn,
+  Crown,
 } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import confetti from "canvas-confetti";
 import html2canvas from "html2canvas";
 import PlayerSearch from "./player-search";
@@ -25,6 +34,9 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import LoginForm from "./login-form";
+import PlayerEditDialog from "./player-edit-dialog";
+import CaptainSelectionDialog from "./captain-selection-dialog";
+import { getCategoryIcon } from "@/lib/utils";
 
 export default function TeamDivider() {
   // Auth state
@@ -35,6 +47,7 @@ export default function TeamDivider() {
   // Team state
   const [players, setPlayers] = useState([]);
   const [newPlayer, setNewPlayer] = useState("");
+  const [newCategory, setNewCategory] = useState("batsman");
   const [teamA, setTeamA] = useState([]);
   const [teamB, setTeamB] = useState([]);
   const [dividing, setDividing] = useState(false);
@@ -42,6 +55,13 @@ export default function TeamDivider() {
   const [pendingTeamA, setPendingTeamA] = useState([]);
   const [pendingTeamB, setPendingTeamB] = useState([]);
   const [printing, setPrinting] = useState(false);
+
+  // Edit state
+  const [editingPlayer, setEditingPlayer] = useState(null);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+
+  // Captain selection state
+  const [showCaptainDialog, setShowCaptainDialog] = useState(false);
 
   // Refs for image export
   const teamsRef = useRef(null);
@@ -56,36 +76,104 @@ export default function TeamDivider() {
     }
   }, []);
 
+  // Update the handleLogin function to clear players and teams
   const handleLogin = (username) => {
     setIsLoggedIn(true);
     setUsername(username);
     localStorage.setItem("teamgen_username", username);
     setShowLoginDialog(false);
+
+    // Clear selected players and teams
+    setPlayers([]);
+    resetTeams();
   };
 
+  // Update the handleLogout function to clear players and teams
   const handleLogout = () => {
     setIsLoggedIn(false);
     setUsername("");
     localStorage.removeItem("teamgen_username");
+
+    // Clear selected players and teams
+    setPlayers([]);
+    resetTeams();
   };
 
   const handleAddPlayer = (e) => {
     e.preventDefault();
-    if (newPlayer.trim() && !players.includes(newPlayer.trim())) {
-      setPlayers([...players, newPlayer.trim()]);
+    if (!newPlayer.trim()) return;
+
+    // Generate a unique ID for the player
+    const playerId = `player_${Date.now()}`;
+
+    // Create player object
+    const playerObj = {
+      id: playerId,
+      name: newPlayer.trim(),
+      category: newCategory,
+      isCaptain: false, // Always false initially
+    };
+
+    if (!players.some((p) => p.name === newPlayer.trim())) {
+      setPlayers([...players, playerObj]);
       setNewPlayer("");
+      setNewCategory("batsman");
       inputRef.current?.focus();
     }
   };
 
   const handleSelectStoredPlayer = (player) => {
-    if (!players.includes(player)) {
+    if (!players.some((p) => p.id === player.id)) {
       setPlayers([...players, player]);
     }
   };
 
-  const handleRemovePlayer = (playerToRemove) => {
-    setPlayers(players.filter((player) => player !== playerToRemove));
+  const handleRemovePlayer = (playerId) => {
+    setPlayers(players.filter((player) => player.id !== playerId));
+  };
+
+  const handleEditPlayer = (player) => {
+    setEditingPlayer(player);
+    setShowEditDialog(true);
+  };
+
+  const handleSavePlayer = (updatedPlayer) => {
+    // Update player in the current list
+    const updatedPlayers = players.map((p) =>
+      p.id === updatedPlayer.id ? updatedPlayer : p
+    );
+    setPlayers(updatedPlayers);
+
+    // If logged in, also update in localStorage
+    if (isLoggedIn) {
+      const storedPlayers =
+        JSON.parse(localStorage.getItem(`players_${username}`)) || [];
+      const updatedStoredPlayers = storedPlayers.map((p) =>
+        p.id === updatedPlayer.id ? updatedPlayer : p
+      );
+      localStorage.setItem(
+        `players_${username}`,
+        JSON.stringify(updatedStoredPlayers)
+      );
+    }
+  };
+
+  const handleDeletePlayer = (playerId) => {
+    // Remove from current players list
+    setPlayers(players.filter((p) => p.id !== playerId));
+
+    // If logged in, also remove from localStorage
+    if (isLoggedIn) {
+      const storedPlayers =
+        JSON.parse(localStorage.getItem(`players_${username}`)) || [];
+      const updatedStoredPlayers = storedPlayers.filter(
+        (p) => p.id !== playerId
+      );
+      localStorage.setItem(
+        `players_${username}`,
+        JSON.stringify(updatedStoredPlayers)
+      );
+    }
   };
 
   // Effect to handle the animation of adding players to teams
@@ -145,21 +233,89 @@ export default function TeamDivider() {
     players.length,
   ]);
 
-  const divideTeams = () => {
+  // Handle initial divide teams click - show captain selection dialog
+  const handleDivideTeamsClick = () => {
     if (players.length < 2) return;
+
+    // Show captain selection dialog
+    setShowCaptainDialog(true);
+  };
+
+  // Handle captain selection and proceed with team division
+  const handleCaptainsSelected = (captainIds) => {
+    if (captainIds.length !== 2) return;
+
+    // Mark selected players as captains
+    const updatedPlayers = players.map((player) => ({
+      ...player,
+      isCaptain: captainIds.includes(player.id),
+    }));
+
+    setPlayers(updatedPlayers);
+
+    // Now proceed with team division
+    divideTeams(updatedPlayers, captainIds);
+  };
+
+  // Update the divideTeams function to use the selected captains
+  const divideTeams = (updatedPlayersList, captainIds) => {
+    const playersList = updatedPlayersList || players;
 
     setDividing(true);
     setDivided(false);
     setTeamA([]);
     setTeamB([]);
 
-    // Create a copy of the players array to shuffle
-    const shuffledPlayers = [...players].sort(() => Math.random() - 0.5);
+    // Get the two captain players
+    const captain1 = playersList.find((p) => p.id === captainIds[0]);
+    const captain2 = playersList.find((p) => p.id === captainIds[1]);
 
-    // Divide players into two teams
-    const halfLength = Math.ceil(shuffledPlayers.length / 2);
-    const newTeamA = shuffledPlayers.slice(0, halfLength);
-    const newTeamB = shuffledPlayers.slice(halfLength);
+    // Get non-captain players
+    const nonCaptainPlayers = playersList.filter(
+      (p) => !captainIds.includes(p.id)
+    );
+
+    // Shuffle non-captain players
+    const shuffledPlayers = [...nonCaptainPlayers].sort(
+      () => Math.random() - 0.5
+    );
+
+    // Separate players by category
+    const batsmen = shuffledPlayers.filter((p) => p.category === "batsman");
+    const bowlers = shuffledPlayers.filter((p) => p.category === "bowler");
+    const allRounders = shuffledPlayers.filter(
+      (p) => p.category === "all-rounder"
+    );
+
+    // Initialize teams with captains
+    const newTeamA = [captain1];
+    const newTeamB = [captain2];
+
+    // Helper function to distribute players evenly
+    const distributeEvenly = (players) => {
+      const teamACount = newTeamA.length;
+      const teamBCount = newTeamB.length;
+
+      players.forEach((player, index) => {
+        // If team A has fewer players, or equal but it's an even index
+        if (
+          teamACount + newTeamA.length - teamACount <
+            teamBCount + newTeamB.length - teamBCount ||
+          (teamACount + newTeamA.length - teamACount ===
+            teamBCount + newTeamB.length - teamBCount &&
+            index % 2 === 0)
+        ) {
+          newTeamA.push(player);
+        } else {
+          newTeamB.push(player);
+        }
+      });
+    };
+
+    // Distribute players by category to balance teams
+    distributeEvenly(batsmen);
+    distributeEvenly(bowlers);
+    distributeEvenly(allRounders);
 
     // Set the pending players for each team
     setPendingTeamA(newTeamA);
@@ -240,11 +396,28 @@ export default function TeamDivider() {
         </DialogContent>
       </Dialog>
 
+      {/* Player Edit Dialog */}
+      <PlayerEditDialog
+        player={editingPlayer}
+        isOpen={showEditDialog}
+        onClose={() => setShowEditDialog(false)}
+        onSave={handleSavePlayer}
+        onDelete={handleDeletePlayer}
+      />
+
+      {/* Captain Selection Dialog */}
+      <CaptainSelectionDialog
+        isOpen={showCaptainDialog}
+        onClose={() => setShowCaptainDialog(false)}
+        players={players}
+        onCaptainsSelected={handleCaptainsSelected}
+      />
+
       <Card className="border-none shadow-lg">
         <CardHeader className="bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-t-lg">
           <div className="flex flex-col-reverse md:flex-row gap-2 justify-between items-center">
             <CardTitle className="text-2xl md:text-3xl font-bold">
-              Team Generator
+              🏏 Team Generator
             </CardTitle>
             {isLoggedIn ? (
               <div className="flex items-center gap-2">
@@ -281,26 +454,54 @@ export default function TeamDivider() {
               <PlayerSearch
                 onSelectPlayer={handleSelectStoredPlayer}
                 username={username}
+                selectedPlayers={players}
+                onRemovePlayer={handleRemovePlayer}
+                onEditPlayer={handleEditPlayer}
               />
             ) : (
               // Show input box for non-logged-in users
-              <form onSubmit={handleAddPlayer} className="flex gap-2">
-                <Input
-                  ref={inputRef}
-                  type="text"
-                  placeholder="Enter player name"
-                  value={newPlayer}
-                  onChange={(e) => setNewPlayer(e.target.value)}
-                  className="flex-1"
-                  disabled={dividing}
-                />
+              <form onSubmit={handleAddPlayer} className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="playerName">Player Name</Label>
+                    <Input
+                      id="playerName"
+                      ref={inputRef}
+                      type="text"
+                      placeholder="Enter player name"
+                      value={newPlayer}
+                      onChange={(e) => setNewPlayer(e.target.value)}
+                      className="mt-1"
+                      disabled={dividing}
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="playerCategory">Player Category</Label>
+                    <Select
+                      value={newCategory}
+                      onValueChange={setNewCategory}
+                      disabled={dividing}
+                    >
+                      <SelectTrigger id="playerCategory" className="mt-1">
+                        <SelectValue placeholder="Select category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="batsman">Batsman</SelectItem>
+                        <SelectItem value="bowler">Bowler</SelectItem>
+                        <SelectItem value="all-rounder">All-Rounder</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
                 <Button
                   type="submit"
                   disabled={!newPlayer.trim() || dividing}
                   className="bg-purple-600 hover:bg-purple-700"
                 >
                   <UserPlus className="mr-2 h-4 w-4" />
-                  Add
+                  Add Player
                 </Button>
               </form>
             )}
@@ -320,16 +521,24 @@ export default function TeamDivider() {
                   <AnimatePresence>
                     {players.map((player) => (
                       <motion.div
-                        key={player}
+                        key={player.id}
                         initial={{ opacity: 0, scale: 0.8 }}
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.8 }}
                         className="bg-purple-100 text-purple-800 px-3 py-1 rounded-full flex items-center"
                       >
-                        <span>{player}</span>
+                        <span className="mr-1">
+                          {getCategoryIcon(player.category)}
+                        </span>
+                        <span>{player.name}</span>
+                        {player.isCaptain && (
+                          <span className="ml-1">
+                            <Crown className="h-3 w-3 text-amber-500" />
+                          </span>
+                        )}
                         <button
-                          onClick={() => handleRemovePlayer(player)}
-                          className="ml-2 text-purple-600 hover:text-purple-800"
+                          onClick={() => handleRemovePlayer(player.id)}
+                          className="ml-1 text-purple-600 hover:text-purple-800"
                           disabled={dividing}
                         >
                           <X className="h-4 w-4" />
@@ -343,7 +552,7 @@ export default function TeamDivider() {
 
             <div className="flex justify-center">
               <Button
-                onClick={divideTeams}
+                onClick={handleDivideTeamsClick}
                 disabled={players.length < 2 || dividing}
                 className="bg-blue-600 hover:bg-blue-700"
                 size="lg"
@@ -449,16 +658,29 @@ function TeamCard({ title, players, color, dividing, pendingCount, printing }) {
                 <AnimatePresence>
                   {players.map((player, index) => (
                     <motion.li
-                      key={player}
+                      key={player.id}
                       initial={{ opacity: 0, x: color === "purple" ? -20 : 20 }}
                       animate={{ opacity: 1, x: 0 }}
                       exit={{ opacity: 0, scale: 0.8 }}
                       transition={{ delay: index * 0.1 }}
-                      className={`${colorClasses[color].player} px-4 h-10 ${
+                      className={`${
+                        colorClasses[color].player
+                      } px-4 rounded-lg h-10 ${
                         printing ? "" : "flex items-center"
-                      } rounded-lg`}
+                      }`}
                     >
-                      {player}
+                      <span className="mr-2">
+                        {getCategoryIcon(player.category)}
+                      </span>
+                      <span className="flex-1">{player.name}</span>
+                      {player.isCaptain && (
+                        <span className="ml-1 flex items-center">
+                          <Crown className="h-4 w-4 text-amber-500 mr-1" />
+                          <span className="text-xs font-semibold text-amber-700">
+                            Captain
+                          </span>
+                        </span>
+                      )}
                     </motion.li>
                   ))}
                 </AnimatePresence>
