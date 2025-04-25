@@ -201,7 +201,7 @@ export default function PlayerSearch({
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="ml-auto h-6 w-6 sm:h-8 sm:w-8 p-0"
+                          className="ml-auto h-6 w-6 sm:h-8 sm:w-8 p-0 sm:p-0"
                           onClick={(e) => handleEditClick(e, player)}
                         >
                           <Edit className="h-3 w-3 sm:h-4 sm:w-4" />
