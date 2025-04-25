@@ -54,7 +54,6 @@ export default function TeamDivider() {
   const [divided, setDivided] = useState(false);
   const [pendingTeamA, setPendingTeamA] = useState([]);
   const [pendingTeamB, setPendingTeamB] = useState([]);
-  const [printing, setPrinting] = useState(false);
 
   // Edit state
   const [editingPlayer, setEditingPlayer] = useState(null);
@@ -342,7 +341,7 @@ export default function TeamDivider() {
       container.style.gap = "20px";
       container.style.padding = "20px";
       container.style.background = "white";
-      container.style.maxWidth = "800px";
+      container.style.maxWidth = "850px";
       container.style.width = "fit-content";
 
       // Clone the team divs
@@ -369,17 +368,10 @@ export default function TeamDivider() {
       link.href = image;
       link.download = "teams.png";
       link.click();
-      setPrinting(false);
     } catch (error) {
       console.error("Error saving image:", error);
     }
   };
-
-  useEffect(() => {
-    if (printing) {
-      saveAsImage();
-    }
-  }, [printing]);
 
   return (
     <div className="space-y-8">
@@ -568,26 +560,20 @@ export default function TeamDivider() {
       {(teamA.length > 0 || teamB.length > 0 || dividing) && (
         <>
           <div className="grid md:grid-cols-2 gap-6" ref={teamsRef}>
-            <div className="sm:min-w-80">
-              <TeamCard
-                title="Team A"
-                players={teamA}
-                color="purple"
-                dividing={dividing}
-                pendingCount={pendingTeamA.length}
-                printing={printing}
-              />
-            </div>
-            <div className="sm:min-w-80">
-              <TeamCard
-                title="Team B"
-                players={teamB}
-                color="blue"
-                dividing={dividing}
-                pendingCount={pendingTeamB.length}
-                printing={printing}
-              />
-            </div>
+            <TeamCard
+              title="Team A"
+              players={teamA}
+              color="purple"
+              dividing={dividing}
+              pendingCount={pendingTeamA.length}
+            />
+            <TeamCard
+              title="Team B"
+              players={teamB}
+              color="blue"
+              dividing={dividing}
+              pendingCount={pendingTeamB.length}
+            />
           </div>
 
           {divided && (
@@ -600,7 +586,7 @@ export default function TeamDivider() {
                 Reset Teams
               </Button>
               <Button
-                onClick={() => setPrinting(true)}
+                onClick={() => saveAsImage()}
                 className="bg-green-600 hover:bg-green-700"
               >
                 <Download className="mr-2 h-4 w-4" />
@@ -614,7 +600,7 @@ export default function TeamDivider() {
   );
 }
 
-function TeamCard({ title, players, color, dividing, pendingCount, printing }) {
+function TeamCard({ title, players, color, dividing, pendingCount }) {
   const colorClasses = {
     purple: {
       header: "bg-purple-600",
@@ -634,7 +620,9 @@ function TeamCard({ title, players, color, dividing, pendingCount, printing }) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
     >
-      <Card className={`border shadow-md ${colorClasses[color].card}`}>
+      <Card
+        className={`border shadow-md sm:min-w-96 ${colorClasses[color].card}`}
+      >
         <CardHeader
           className={`${colorClasses[color].header} text-white rounded-t-lg py-3`}
         >
@@ -663,18 +651,14 @@ function TeamCard({ title, players, color, dividing, pendingCount, printing }) {
                       animate={{ opacity: 1, x: 0 }}
                       exit={{ opacity: 0, scale: 0.8 }}
                       transition={{ delay: index * 0.1 }}
-                      className={`${
-                        colorClasses[color].player
-                      } px-4 rounded-lg h-10 ${
-                        printing ? "" : "flex items-center"
-                      }`}
+                      className={`${colorClasses[color].player} px-4 rounded-lg h-10 flex items-center`}
                     >
-                      <span className="mr-2">
+                      <span className={`mr-2`}>
                         {getCategoryIcon(player.category)}
                       </span>
                       <span className="flex-1">{player.name}</span>
                       {player.isCaptain && (
-                        <span className="ml-1 flex items-center">
+                        <span className="ml-auto flex items-center">
                           <Crown className="h-4 w-4 text-amber-500 mr-1" />
                           <span className="text-xs font-semibold text-amber-700">
                             Captain

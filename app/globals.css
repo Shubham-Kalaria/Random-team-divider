@@ -65,4 +65,7 @@ body {
   body {
     @apply bg-background text-foreground;
   }
+  img {
+    @apply inline-block;
+  }
 }
