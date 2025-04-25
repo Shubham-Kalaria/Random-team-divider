@@ -312,8 +312,8 @@ export default function TeamDivider() {
 
     // Distribute players by category to balance teams
     distributeEvenly(batsmen);
-    distributeEvenly(bowlers);
     distributeEvenly(allRounders);
+    distributeEvenly(bowlers);
 
     // Set the pending players for each team
     setPendingTeamA(newTeamA);
@@ -406,20 +406,20 @@ export default function TeamDivider() {
 
       <Card className="border-none shadow-lg">
         <CardHeader className="bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-t-lg">
-          <div className="flex flex-col-reverse md:flex-row gap-2 justify-between items-center">
-            <CardTitle className="text-2xl md:text-3xl font-bold">
+          <div className="flex flex-col-reverse md:flex-row gap-1 md:gap-8 justify-between items-center">
+            <CardTitle className="text-xl sm:text-3xl font-bold flex-none">
               🏏 Team Generator
             </CardTitle>
             {isLoggedIn ? (
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-white/80">
-                  Welcome, {username}
+              <div className="flex items-center gap-4">
+                <span className="text-sm text-white/80 max-w-40 sm:max-w-52 truncate">
+                  {`Welcome, ${username}`}
                 </span>
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={handleLogout}
-                  className="text-white hover:text-primary"
+                  className="text-white hover:text-primary gap-0 sm:gap-2 flex-none"
                 >
                   <LogOut className="h-4 w-4 mr-2" />
                   Logout
@@ -438,7 +438,7 @@ export default function TeamDivider() {
             )}
           </div>
         </CardHeader>
-        <CardContent className="p-6">
+        <CardContent className="p-4 sm:p-6">
           <div className="space-y-4">
             {isLoggedIn ? (
               // Show player search dropdown for logged-in users
@@ -498,7 +498,7 @@ export default function TeamDivider() {
             )}
 
             <div className="mb-6">
-              <h3 className="text-lg font-medium mb-3 flex items-center">
+              <h3 className="sm:text-lg font-medium mb-3 flex items-center">
                 <Users className="mr-2 h-5 w-5 text-purple-600" />
                 Players ({players.length})
               </h3>
@@ -508,7 +508,7 @@ export default function TeamDivider() {
                   Add players to get started
                 </p>
               ) : (
-                <div className="flex flex-wrap gap-2">
+                <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-1 sm:gap-2">
                   <AnimatePresence>
                     {players.map((player) => (
                       <motion.div
@@ -516,12 +516,12 @@ export default function TeamDivider() {
                         initial={{ opacity: 0, scale: 0.8 }}
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.8 }}
-                        className="bg-purple-100 text-purple-800 px-3 py-1 rounded-full flex items-center"
+                        className="bg-purple-100 text-purple-800 px-2 sm:px-3 py-1 text-xs sm:text-base rounded-full flex items-center"
                       >
                         <span className="mr-1">
                           {getCategoryIcon(player.category)}
                         </span>
-                        <span>{player.name}</span>
+                        <span className="truncate flex-1">{player.name}</span>
                         <button
                           onClick={() => handleRemovePlayer(player.id)}
                           className="ml-1 text-purple-600 hover:text-purple-800"
@@ -615,19 +615,19 @@ function TeamCard({ title, players, color, dividing, pendingCount }) {
       transition={{ duration: 0.5 }}
     >
       <Card
-        className={`border shadow-md sm:min-w-96 ${colorClasses[color].card}`}
+        className={`border shadow-md min-w-72 md:min-w-96 ${colorClasses[color].card}`}
       >
         <CardHeader
           className={`${colorClasses[color].header} text-white rounded-t-lg py-3`}
         >
-          <CardTitle className="text-center text-xl">
+          <CardTitle className="text-center sm:text-xl">
             {title}{" "}
             {dividing &&
               pendingCount > 0 &&
               `(${players.length} of ${players.length + pendingCount})`}
           </CardTitle>
         </CardHeader>
-        <CardContent className="p-4">
+        <CardContent className="p-3 sm:p-4">
           <div className="min-h-[200px]">
             {players.length === 0 ? (
               <div className="h-full flex items-center justify-center">
@@ -645,16 +645,16 @@ function TeamCard({ title, players, color, dividing, pendingCount }) {
                       animate={{ opacity: 1, x: 0 }}
                       exit={{ opacity: 0, scale: 0.8 }}
                       transition={{ delay: index * 0.1 }}
-                      className={`${colorClasses[color].player} px-4 rounded-lg h-10 flex items-center`}
+                      className={`${colorClasses[color].player} text-sm sm:text-base px-3 sm:px-4 rounded-lg h-9 sm:h-10 flex items-center`}
                     >
-                      <span className={`mr-2`}>
+                      <span className="mr-2">
                         {getCategoryIcon(player.category)}
                       </span>
                       <span className="flex-1">{player.name}</span>
                       {player.isCaptain && (
                         <span className="ml-auto flex items-center">
                           <Crown className="h-4 w-4 text-amber-500 mr-1" />
-                          <span className="text-xs font-semibold text-amber-700">
+                          <span className="text-xs font-semibold text-amber-700 hidden sm:inline">
                             Captain
                           </span>
                         </span>
