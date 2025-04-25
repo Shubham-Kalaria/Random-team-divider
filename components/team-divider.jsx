@@ -110,7 +110,6 @@ export default function TeamDivider() {
       id: playerId,
       name: newPlayer.trim(),
       category: newCategory,
-      isCaptain: false, // Always false initially
     };
 
     if (!players.some((p) => p.name === newPlayer.trim())) {
@@ -523,11 +522,6 @@ export default function TeamDivider() {
                           {getCategoryIcon(player.category)}
                         </span>
                         <span>{player.name}</span>
-                        {player.isCaptain && (
-                          <span className="ml-1">
-                            <Crown className="h-3 w-3 text-amber-500" />
-                          </span>
-                        )}
                         <button
                           onClick={() => handleRemovePlayer(player.id)}
                           className="ml-1 text-purple-600 hover:text-purple-800"

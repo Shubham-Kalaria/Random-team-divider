@@ -1,113 +1,152 @@
-"use client"
+"use client";
 
-import { useState, useEffect, useRef } from "react"
-import { Button } from "@/components/ui/button"
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Check, ChevronsUpDown, Plus, Search, UserPlus, Edit } from "lucide-react"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { getCategoryIcon } from "@/lib/utils"
+import { useState, useEffect, useRef } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Check,
+  ChevronsUpDown,
+  Plus,
+  Search,
+  UserPlus,
+  Edit,
+} from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { getCategoryIcon } from "@/lib/utils";
 
-export default function PlayerSearch({ onSelectPlayer, username, selectedPlayers, onRemovePlayer, onEditPlayer }) {
-  const [open, setOpen] = useState(false)
-  const [search, setSearch] = useState("")
-  const [storedPlayers, setStoredPlayers] = useState([])
-  const [filteredPlayers, setFilteredPlayers] = useState([])
-  const [showAddNew, setShowAddNew] = useState(false)
-  const [newPlayer, setNewPlayer] = useState("")
-  const [newCategory, setNewCategory] = useState("batsman")
-  const inputRef = useRef(null)
+export default function PlayerSearch({
+  onSelectPlayer,
+  username,
+  selectedPlayers,
+  onRemovePlayer,
+  onEditPlayer,
+}) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const [storedPlayers, setStoredPlayers] = useState([]);
+  const [filteredPlayers, setFilteredPlayers] = useState([]);
+  const [showAddNew, setShowAddNew] = useState(false);
+  const [newPlayer, setNewPlayer] = useState("");
+  const [newCategory, setNewCategory] = useState("batsman");
+  const inputRef = useRef(null);
 
   // Load stored players from localStorage
   useEffect(() => {
     const loadStoredPlayers = () => {
-      const savedPlayers = localStorage.getItem(`players_${username}`)
+      const savedPlayers = localStorage.getItem(`players_${username}`);
       if (savedPlayers) {
         try {
-          const parsedPlayers = JSON.parse(savedPlayers)
-          setStoredPlayers(Array.isArray(parsedPlayers) ? parsedPlayers : [])
+          const parsedPlayers = JSON.parse(savedPlayers);
+          setStoredPlayers(Array.isArray(parsedPlayers) ? parsedPlayers : []);
         } catch (e) {
-          console.error("Error parsing stored players:", e)
-          setStoredPlayers([])
+          console.error("Error parsing stored players:", e);
+          setStoredPlayers([]);
         }
       }
-    }
+    };
 
-    loadStoredPlayers()
-  }, [username])
+    loadStoredPlayers();
+  }, [username, onRemovePlayer]);
 
   // Filter players based on search
   useEffect(() => {
     if (!search.trim()) {
-      setFilteredPlayers(storedPlayers)
+      setFilteredPlayers(storedPlayers);
     } else {
-      const filtered = storedPlayers.filter((player) => player.name.toLowerCase().includes(search.toLowerCase()))
-      setFilteredPlayers(filtered)
+      const filtered = storedPlayers.filter((player) =>
+        player.name.toLowerCase().includes(search.toLowerCase())
+      );
+      setFilteredPlayers(filtered);
     }
-  }, [search, storedPlayers])
+  }, [search, storedPlayers]);
 
   const handleAddNewPlayer = () => {
-    if (!newPlayer.trim()) return
+    if (!newPlayer.trim()) return;
 
     // Generate a unique ID for the player
-    const playerId = `player_${Date.now()}`
+    const playerId = `player_${Date.now()}`;
 
     // Create player object
     const playerObj = {
       id: playerId,
       name: newPlayer.trim(),
       category: newCategory,
-      isCaptain: false, // Always false initially
-    }
+    };
 
     // Check if player already exists
     if (!storedPlayers.some((p) => p.name === newPlayer.trim())) {
-      const newStoredPlayers = [...storedPlayers, playerObj]
-      setStoredPlayers(newStoredPlayers)
+      const newStoredPlayers = [...storedPlayers, playerObj];
+      setStoredPlayers(newStoredPlayers);
 
       // Save to localStorage
-      localStorage.setItem(`players_${username}`, JSON.stringify(newStoredPlayers))
-    }
+      localStorage.setItem(
+        `players_${username}`,
+        JSON.stringify(newStoredPlayers)
+      );
 
-    // Select the player
-    onSelectPlayer(playerObj)
-    setNewPlayer("")
-    setNewCategory("batsman")
-    setShowAddNew(false)
-  }
+      // Select the player
+      onSelectPlayer(playerObj);
+      setNewPlayer("");
+      setNewCategory("batsman");
+      setShowAddNew(false);
+    }
+  };
 
   const handleSelectPlayer = (player) => {
     // Check if player is already selected
-    const isAlreadySelected = selectedPlayers.some((p) => p.id === player.id)
+    const isAlreadySelected = selectedPlayers.some((p) => p.id === player.id);
 
     if (isAlreadySelected) {
       // If already selected, remove the player
-      onRemovePlayer(player.id)
+      onRemovePlayer(player.id);
     } else {
       // Otherwise, add the player
-      onSelectPlayer(player)
+      onSelectPlayer(player);
     }
 
-    setSearch("")
-    setOpen(false)
-  }
+    setSearch("");
+    setOpen(false);
+  };
 
   const handleEditClick = (e, player) => {
-    e.stopPropagation() // Prevent selection of the player
-    onEditPlayer(player)
-  }
+    e.stopPropagation(); // Prevent selection of the player
+    onEditPlayer(player);
+  };
 
   return (
     <div className="space-y-4">
       <div className="flex gap-2">
         <Popover open={open} onOpenChange={setOpen} className="flex-1">
           <PopoverTrigger asChild>
-            <Button variant="outline" role="combobox" aria-expanded={open} className="w-full justify-between">
+            <Button
+              variant="outline"
+              role="combobox"
+              aria-expanded={open}
+              className="w-full justify-between"
+            >
               <div className="flex items-center">
                 <Search className="mr-2 h-4 w-4 text-muted-foreground" />
-                {search || "Select stored players..."}
+                {search || "Select players..."}
               </div>
               <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
             </Button>
@@ -130,9 +169,9 @@ export default function PlayerSearch({ onSelectPlayer, username, selectedPlayers
                       size="sm"
                       className="mt-2 w-full justify-start text-muted-foreground"
                       onClick={() => {
-                        setShowAddNew(true)
-                        setOpen(false)
-                        setNewPlayer(search)
+                        setShowAddNew(true);
+                        setOpen(false);
+                        setNewPlayer(search);
                       }}
                     >
                       <Plus className="mr-2 h-4 w-4" />
@@ -142,12 +181,22 @@ export default function PlayerSearch({ onSelectPlayer, username, selectedPlayers
                 </CommandEmpty>
                 <CommandGroup>
                   {filteredPlayers.map((player) => {
-                    const isSelected = selectedPlayers.some((p) => p.id === player.id)
+                    const isSelected = selectedPlayers.some(
+                      (p) => p.id === player.id
+                    );
                     return (
-                      <CommandItem key={player.id} value={player.name} onSelect={() => handleSelectPlayer(player)}>
+                      <CommandItem
+                        key={player.id}
+                        value={player.name}
+                        onSelect={() => handleSelectPlayer(player)}
+                      >
                         <div className="flex items-center flex-1">
-                          {isSelected && <Check className="mr-2 h-4 w-4 text-green-600" />}
-                          <span className="mr-2">{getCategoryIcon(player.category)}</span>
+                          {isSelected && (
+                            <Check className="mr-2 h-4 w-4 text-green-600" />
+                          )}
+                          <span className="mr-2">
+                            {getCategoryIcon(player.category)}
+                          </span>
                           {player.name}
                         </div>
                         <Button
@@ -159,13 +208,13 @@ export default function PlayerSearch({ onSelectPlayer, username, selectedPlayers
                           <Edit className="h-3 w-3" />
                         </Button>
                       </CommandItem>
-                    )
+                    );
                   })}
                   <CommandItem
                     onSelect={() => {
-                      setShowAddNew(true)
-                      setOpen(false)
-                      setNewPlayer(search)
+                      setShowAddNew(true);
+                      setOpen(false);
+                      setNewPlayer(search);
                     }}
                   >
                     <Plus className="mr-2 h-4 w-4" />
@@ -177,7 +226,10 @@ export default function PlayerSearch({ onSelectPlayer, username, selectedPlayers
           </PopoverContent>
         </Popover>
 
-        <Button onClick={() => setShowAddNew(true)} className="bg-purple-600 hover:bg-purple-700">
+        <Button
+          onClick={() => setShowAddNew(!showAddNew)}
+          className="bg-purple-600 hover:bg-purple-700"
+        >
           <UserPlus className="h-4 w-4" />
         </Button>
       </div>
@@ -214,12 +266,15 @@ export default function PlayerSearch({ onSelectPlayer, username, selectedPlayers
             <Button variant="outline" onClick={() => setShowAddNew(false)}>
               Cancel
             </Button>
-            <Button onClick={handleAddNewPlayer} className="bg-purple-600 hover:bg-purple-700">
+            <Button
+              onClick={handleAddNewPlayer}
+              className="bg-purple-600 hover:bg-purple-700"
+            >
               Add Player
             </Button>
           </div>
         </div>
       )}
     </div>
-  )
+  );
 }
