@@ -14,6 +14,7 @@ import {
   Download,
   LogIn,
   Crown,
+  Share2,
 } from "lucide-react";
 import {
   Select,
@@ -372,6 +373,81 @@ export default function TeamDivider() {
     }
   };
 
+  const shareTeamsImage = async () => {
+    if (!teamsRef.current) return;
+
+    try {
+      // Check if Web Share API is supported
+      if (!navigator.share) {
+        alert(
+          "Web Share API is not supported in your browser. Try saving the image instead."
+        );
+        return;
+      }
+
+      // Create a container div to hold both teams
+      const container = document.createElement("div");
+      container.style.display = "flex";
+      container.style.flexDirection =
+        window.innerWidth < 650 ? "column" : "row";
+      container.style.gap = "20px";
+      container.style.padding = "20px";
+      container.style.background = "white";
+      container.style.maxWidth = "850px";
+      container.style.width = "fit-content";
+
+      // Clone the team divs
+      const teamsClone = teamsRef.current.cloneNode(true);
+
+      // Append to container
+      container.appendChild(teamsClone);
+
+      // Temporarily add to document to render
+      document.body.appendChild(container);
+
+      // Convert to canvas
+      const canvas = await html2canvas(container, {
+        backgroundColor: "white",
+        scale: 2, // Higher quality
+      });
+
+      // Remove temporary container
+      document.body.removeChild(container);
+
+      // Convert canvas to blob
+      const blob = await new Promise((resolve) =>
+        canvas.toBlob(resolve, "image/png")
+      );
+
+      // Create file from blob
+      const file = new File([blob], "cricket-teams.png", { type: "image/png" });
+
+      // Share the file
+      await navigator.share({
+        title: "Cricket Teams",
+        text: "Check out our cricket teams!",
+        files: [file],
+      });
+    } catch (error) {
+      console.error("Error sharing image:", error);
+
+      // Fallback if file sharing fails (some browsers support share but not file sharing)
+      if (error.toString().includes("files")) {
+        try {
+          await navigator.share({
+            title: "Cricket Teams",
+            text: "Check out our cricket teams!",
+          });
+        } catch (fallbackError) {
+          console.error("Fallback sharing failed:", fallbackError);
+          alert("Unable to share. Try saving the image instead.");
+        }
+      } else {
+        alert("Unable to share. Try saving the image instead.");
+      }
+    }
+  };
+
   return (
     <div className="space-y-8">
       {/* Login Dialog */}
@@ -412,9 +488,7 @@ export default function TeamDivider() {
             </CardTitle>
             {isLoggedIn ? (
               <div className="flex items-center gap-4">
-                <span className="text-sm text-white/80 max-w-40 sm:max-w-52 truncate">
-                  {`Welcome, ${username}`}
-                </span>
+                <span className="text-sm text-white/80 max-w-40 sm:max-w-52 truncate">{`Welcome, ${username}`}</span>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -584,7 +658,14 @@ export default function TeamDivider() {
                 className="bg-green-600 hover:bg-green-700"
               >
                 <Download className="mr-2 h-4 w-4" />
-                Save as Image
+                Save
+              </Button>
+              <Button
+                onClick={shareTeamsImage}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                <Share2 className="mr-2 h-4 w-4" />
+                Share
               </Button>
             </div>
           )}
